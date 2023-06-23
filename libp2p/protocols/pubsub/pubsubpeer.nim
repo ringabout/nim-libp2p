@@ -136,17 +136,20 @@ proc handle*(p: PubSubPeer, conn: Connection) {.async.} =
           conn, peer = p, closed = conn.closed,
           data = data.shortLog
         # In this way we count even ignored fields by protobuf
-        let msgSize = sizeof(data)
+        let msgSize = len(data)
         p.totalTraffic += msgSize
         var rmsg = decodeRpcMsg(data)
-        p.invalidIgnoredTraffic += msgSize - sizeof(rmsg)
+
         data = newSeq[byte]() # Release memory
 
         if rmsg.isErr():
+          p.invalidTraffic += msgSize
           notice "failed to decode msg from peer",
             conn, peer = p, closed = conn.closed,
             err = rmsg.error()
           break
+
+        p.invalidIgnoredTraffic += msgSize - byteSize(rmsg.get())
 
         trace "decoded msg from peer",
           conn, peer = p, closed = conn.closed,
