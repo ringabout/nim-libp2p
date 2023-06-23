@@ -65,6 +65,9 @@ type
     maxMessageSize: int
     appScore*: float64 # application specific score
     behaviourPenalty*: float64 # the eventual penalty score
+    totalTraffic*: int64
+    invalidTraffic*: int64
+    invalidIgnoredTraffic*: int64
 
   RPCHandler* = proc(peer: PubSubPeer, msg: RPCMsg): Future[void]
     {.gcsafe, raises: [].}
@@ -132,8 +135,11 @@ proc handle*(p: PubSubPeer, conn: Connection) {.async.} =
         trace "read data from peer",
           conn, peer = p, closed = conn.closed,
           data = data.shortLog
-
+        # In this way we count even ignored fields by protobuf
+        let msgSize = sizeof(data)
+        p.totalTraffic += msgSize
         var rmsg = decodeRpcMsg(data)
+        p.invalidIgnoredTraffic += msgSize - sizeof(rmsg)
         data = newSeq[byte]() # Release memory
 
         if rmsg.isErr():
