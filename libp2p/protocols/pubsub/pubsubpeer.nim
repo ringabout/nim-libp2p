@@ -66,8 +66,8 @@ type
     appScore*: float64 # application specific score
     behaviourPenalty*: float64 # the eventual penalty score
     totalTraffic*: int64
-    invalidTraffic*: int64
-    invalidIgnoredTraffic*: int64
+    invalidTraffic*: int64 # data that was parsed by protobuf but was invalid
+    invalidIgnoredTraffic*: int64 # data that couldn't be parsed by protobuf
 
   RPCHandler* = proc(peer: PubSubPeer, msg: RPCMsg): Future[void]
     {.gcsafe, raises: [].}
